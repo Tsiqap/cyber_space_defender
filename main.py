@@ -1,4 +1,4 @@
-import pygame, random, sys
+import pygame, random, sys, os
 
 pygame.init()
 
@@ -11,9 +11,38 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 36)
 
 # === LOAD GAMBAR ===
-player_img = pygame.image.load("assets/player.png").convert_alpha()
-enemy_img = pygame.image.load("assets/enemy.png").convert_alpha()
-boss_img = pygame.image.load("assets/boss.png").convert_alpha()
+# Robust image loading: use absolute paths relative to this file and fallback to a
+# visible placeholder surface if loading fails. This avoids errors when the
+# current working directory differs from the script directory.
+ASSETS_DIR = os.path.join(os.path.dirname(__file__), "assets")
+
+def _load_image(filename, fallback_size=(64,64)):
+    path = os.path.join(ASSETS_DIR, filename)
+    try:
+        return pygame.image.load(path).convert_alpha()
+    except Exception as e:
+        print(f"Warning: gagal memuat '{path}': {e}")
+        # create magenta-transparent placeholder so it's obvious in the game
+        surf = pygame.Surface(fallback_size, pygame.SRCALPHA)
+        surf.fill((255, 0, 255, 180))
+        pygame.draw.rect(surf, (0,0,0), surf.get_rect(), 2)
+        return surf
+
+# Scale images relative to screen size to avoid oversized sprites causing early collisions.
+def _scale_image(img, target_w):
+    w, h = img.get_width(), img.get_height()
+    if w == 0:
+        return img
+    scale = target_w / w
+    return pygame.transform.smoothscale(img, (int(w * scale), int(h * scale)))
+
+player_img = _load_image("player.png", fallback_size=(64,64))
+enemy_img = _load_image("enemy.png", fallback_size=(48,48))
+boss_img = _load_image("boss.png", fallback_size=(160,120))
+
+player_img = _scale_image(player_img, max(24, WIDTH // 12))
+enemy_img = _scale_image(enemy_img, max(20, WIDTH // 14))
+boss_img = _scale_image(boss_img, max(80, WIDTH // 4))
 
 
 
@@ -21,7 +50,7 @@ boss_img = pygame.image.load("assets/boss.png").convert_alpha()
 music_files = [
     "assets/music_level1.mp3",
     "assets/music_level2.mp3",
-    "assets/music_boss.mp3"
+    "assets/boss_theme.mp3"
 ]
 
 # === ENTITY SETUP ===
@@ -29,6 +58,8 @@ player = player_img.get_rect(center=(WIDTH//2, HEIGHT - 80))
 enemies = []
 level = 1
 player_life = 3
+start_time = pygame.time.get_ticks()  # Track game start time
+invincible_duration = 2000  # 2 seconds of invincibility at start
 
 # Boss
 boss = boss_img.get_rect(center=(WIDTH//2, -150))
@@ -57,8 +88,14 @@ def play_music(index):
 
 def spawn_enemy():
     enemies.clear()
+    print(f"Spawning enemies... Player at y={player.y}")  # Debug print
     for i in range(5 + level * 2):
-        rect = enemy_img.get_rect(center=(random.randint(40, WIDTH-40), random.randint(-150, -40)))
+        # create rect from image and place it fully above the top of the screen
+        rect = enemy_img.get_rect()
+        rect.centerx = random.randint(40, WIDTH - 40)
+        # ensure the enemy starts much higher off-screen
+        rect.y = -rect.height - random.randint(300, 800)  # Increased height range
+        print(f"Enemy {i} spawned at y={rect.y}")  # Debug print
         enemies.append(rect)
 
 def show_text(text, y=300, color=(255,255,255)):
@@ -123,13 +160,21 @@ while running:
         player.y += 5
 
     # Gerak musuh
+    current_time = pygame.time.get_ticks()
+    is_invincible = current_time - start_time < invincible_duration
+
     if not boss_active:
         for enemy in enemies[:]:
             enemy.y += 4
             screen.blit(enemy_img, enemy)
+            # remove enemy when it goes off the bottom
             if enemy.top > HEIGHT:
                 enemies.remove(enemy)
-            if enemy.colliderect(player):
+                continue
+            # only detect collisions once the enemy has entered the visible screen
+            # and player is not invincible
+            if enemy.bottom > 0 and not is_invincible and enemy.colliderect(player):
+                print(f"Collision! Enemy at y={enemy.y}, Player at y={player.y}")  # Debug print
                 player_life -= 1
                 enemies.remove(enemy)
                 if player_life <= 0:
@@ -141,8 +186,8 @@ while running:
 
     # Jika semua musuh hilang, naik level
     if not enemies and not boss_active:
-        if level < 3:
-            level += 1
+        if level < 3: 
+            level += 1 
             play_music(level-1)
             if level == 3:
                 boss_active = True
