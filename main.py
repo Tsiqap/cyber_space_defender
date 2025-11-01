@@ -594,6 +594,17 @@ def run_game():
                     screen.blit(en.sprite, en.rect)
                 else:
                     pygame.draw.rect(screen, COLOR_ENEMY, en.rect)
+                
+                bar_width = en.rect.width
+                bar_height = 5
+                bar_x = en.rect.x
+                bar_y = en.rect.y - 10
+                
+                pygame.draw.rect(screen, (200, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+                
+                if en.hp > 0:
+                    current_health_width = int((en.hp / (2 if level > 1 else 1)) * bar_width)
+                    pygame.draw.rect(screen, (0, 200, 0), (bar_x, bar_y, current_health_width, bar_height))
             
             
             if boss:
