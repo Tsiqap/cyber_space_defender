@@ -1,32 +1,25 @@
-"""Cyber Space Defender - Prototype (fixed)
-Perbaikan: gunakan math.sin, aman untuk pygame.mixer, beberapa safety checks.
-"""
-
 import pygame
 import sys
 import random
 import time
 import math     
 
-# -----------------------------
-# CONFIG / TUNABLE PARAMETERS
-# -----------------------------
+
 SCREEN_WIDTH = 1080
 SCREEN_HEIGHT = 720
 FPS = 60
 
 PLAYER_SPEED = 5
-PLAYER_WIDTH, PLAYER_HEIGHT = 50, 50  # Ukuran player diperbesar lebih besar
-PLAYER_START_POS = (SCREEN_WIDTH // 2 - PLAYER_WIDTH // 2, SCREEN_HEIGHT - PLAYER_HEIGHT - 100)  # Posisi awal dinaikkan agar tidak terlalu ke bawah
-PLAYER_SHOT_COOLDOWN = 300  # ms
+PLAYER_WIDTH, PLAYER_HEIGHT = 50, 50
+PLAYER_START_POS = (SCREEN_WIDTH // 2 - PLAYER_WIDTH // 2, SCREEN_HEIGHT - PLAYER_HEIGHT - 100)
+PLAYER_SHOT_COOLDOWN = 300
 
 BULLET_SPEED = -10
-ENEMY_BULLET_SPEED = 6  # Meningkatkan kecepatan peluru musuh agar lebih mungkin mengenai sprite pemain
+ENEMY_BULLET_SPEED = 6
 
-LEVEL_TIME_BASE = 45  # seconds for level 1; later levels slightly shorter
+LEVEL_TIME_BASE = 45
 MAX_LEVEL = 3
 
-# Visual colors (placeholder assets)
 COLOR_BG = (10, 12, 30)
 COLOR_PLAYER = (50, 160, 255)
 COLOR_ENEMY = (220, 60, 60)
@@ -36,9 +29,7 @@ COLOR_UI = (90, 90, 120)
 COLOR_BOSS = (170, 80, 200)
 COLOR_COLLECT = (60, 200, 120)
 
-# Story and quizzes (editable)
 STORY_DIALOGS = [
-    # Intro sequence before level 1
     [
         "— CYBER SPACE DEFENDER —",
         "Kamu adalah Cyber Guardian, pilot kapal kecil yang menjaga ruang siber.",
@@ -80,6 +71,8 @@ QUIZ_DATA = {
 }
 
 
+icon = pygame.image.load("assets/logo2.png")
+pygame.display.set_icon(icon)
 pygame.init()
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Cyber Space Defender")
@@ -93,11 +86,10 @@ try:
     
     
     enemy_sprite = pygame.image.load("assets/enemy.png").convert_alpha()
-    enemy_sprite = pygame.transform.scale(enemy_sprite, (100, 100))  # Enemy lebih besar
-    
+    enemy_sprite = pygame.transform.scale(enemy_sprite, (100, 100))
     
     boss_sprite = pygame.image.load("assets/boss.png").convert_alpha()
-    boss_sprite = pygame.transform.scale(boss_sprite, (250, 250))  # Boss jauh lebih besar
+    boss_sprite = pygame.transform.scale(boss_sprite, (250, 250))
 except Exception as e:
     print(f"Error loading sprites: {e}")
     player_sprite = enemy_sprite = boss_sprite = None
@@ -133,17 +125,25 @@ except Exception:
     BIG_FONT = pygame.font.Font(None, 28)
     TITLE_FONT = pygame.font.Font(None, 36)
 
-SOUND_SHOT = SOUND_HIT = SOUND_QUIZ_RIGHT = SOUND_QUIZ_WRONG = None
+SOUND_SHOT = SOUND_HIT = SOUND_QUIZ_RIGHT = SOUND_QUIZ_WRONG = SOUND_BUTTON = None
+
 try:
     pygame.mixer.init()
-    # If you have real sound files, load them like:
-    # SOUND_SHOT = pygame.mixer.Sound("shot.wav")
-    # SOUND_HIT = pygame.mixer.Sound("hit.wav")
-    # SOUND_QUIZ_RIGHT = pygame.mixer.Sound("right.wav")
-    # SOUND_QUIZ_WRONG = pygame.mixer.Sound("wrong.wav")
-except Exception:
-    # mixer not available or init failed: keep None
-    SOUND_SHOT = SOUND_HIT = SOUND_QUIZ_RIGHT = SOUND_QUIZ_WRONG = None
+    try:
+        SOUND_SHOT = pygame.mixer.Sound("assets/shot.mp3")
+        SOUND_HIT = pygame.mixer.Sound("assets/hit.mp3")
+        SOUND_QUIZ_RIGHT = pygame.mixer.Sound("assets/right.mp3")
+        SOUND_QUIZ_WRONG = pygame.mixer.Sound("assets/wrong.mp3")
+        SOUND_BUTTON = pygame.mixer.Sound("assets/button.mp3")
+        
+        for sound in [SOUND_SHOT, SOUND_HIT, SOUND_QUIZ_RIGHT, SOUND_QUIZ_WRONG, SOUND_BUTTON]:
+            if sound:
+                sound.set_volume(0.5)
+    except Exception as e:
+        print(f"Warning: Could not load some sound files: {e}")
+except Exception as e:
+    print(f"Warning: Could not initialize sound mixer: {e}")
+    SOUND_SHOT = SOUND_HIT = SOUND_QUIZ_RIGHT = SOUND_QUIZ_WRONG = SOUND_BUTTON = None
 
 
 class Player:
@@ -366,6 +366,8 @@ def spawn_enemies_for_level(level):
     return enemies
 
 def run_game():
+    global SOUND_SHOT, SOUND_HIT, SOUND_QUIZ_RIGHT, SOUND_QUIZ_WRONG, SOUND_BUTTON
+    
     player = Player()
     bullets = []
     enemy_bullets = []
@@ -385,7 +387,13 @@ def run_game():
         collectables.clear()
         boss = Boss() if level == MAX_LEVEL else None
         level_start_time = time.time()
-        level_time_limit = max(15, LEVEL_TIME_BASE - (level - 1) * 6)
+        # Set different time limits for different levels
+        if level == MAX_LEVEL:  # Boss level
+            level_time_limit = 60  # 1 minute for boss level
+        else:
+            level_time_limit = max(15, LEVEL_TIME_BASE - (level - 1) * 6)
+        
+        # Load appropriate music for each level
         if level == 1:
            pygame.mixer.music.load("assets/music_level1.mp3")
         elif level == 2:
@@ -619,29 +627,28 @@ def run_game():
     # End of game screen
     screen.fill(COLOR_BG)
     if player.hp > 0:
-        center_text(screen, "CONGRATULATIONS - You saved the digital world!", SCREEN_HEIGHT//2 - 20, font=BIG_FONT)
-        center_text(screen, f"Final Score: {player.score}", SCREEN_HEIGHT//2 + 30, font=BIG_FONT)
+        center_text(screen, "CONGRATULATIONS - You saved the digital world!", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
+        center_text(screen, f"Final Score: {player.score}", SCREEN_HEIGHT//2, font=BIG_FONT)
     else:
-        center_text(screen, "GAME OVER", SCREEN_HEIGHT//2 - 20, font=BIG_FONT)
-        center_text(screen, "Hoax prevailed... Try again!", SCREEN_HEIGHT//2 + 30, font=BIG_FONT)
-    draw_text(screen, "Press Enter to exit.", SCREEN_WIDTH//2 - 70, SCREEN_HEIGHT - 60)
+        center_text(screen, "GAME OVER", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
+        center_text(screen, "Hoax prevailed... Try again!", SCREEN_HEIGHT//2, font=BIG_FONT)
+    center_text(screen, "Press ENTER to return to Main Menu", SCREEN_HEIGHT//2 + 60, font=FONT)
     pygame.display.flip()
 
     waiting = True
     while waiting:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                waiting = False
+                return "quit"
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
-                    waiting = False
+                    if SOUND_BUTTON:
+                        try: SOUND_BUTTON.play()
+                        except: pass
+                    return "menu"
         clock.tick(FPS)
 
-    pygame.quit()
-    sys.exit()
-
 def show_main_menu():
-    print("Starting main menu...")  # Debug log
     try:
         # Load menu assets
         menu_bg = pygame.image.load("assets/tampilan awal.png").convert()
@@ -651,13 +658,38 @@ def show_main_menu():
         about_button = pygame.image.load("assets/About me.png").convert_alpha()
         
         # Button sizes and scaling
-        button_width, button_height = 200, 80
-        play_button = pygame.transform.scale(play_button, (button_width, button_height))
-        about_button = pygame.transform.scale(about_button, (button_width, button_height))
+        normal_width, normal_height = 300, 100
+        hover_width, hover_height = 330, 110  # Size when hovered
+        
+        # Store original scaled buttons
+        play_button_normal = pygame.transform.scale(play_button, (normal_width, normal_height))
+        about_button_normal = pygame.transform.scale(about_button, (normal_width, normal_height))
+        
+        # Store hover scaled buttons
+        play_button_hover = pygame.transform.scale(play_button, (hover_width, hover_height))
+        about_button_hover = pygame.transform.scale(about_button, (hover_width, hover_height))
+        
+        # Create exit button
+        exit_font = pygame.font.SysFont(None, 48)
+        exit_button_normal = pygame.Surface((200, 60), pygame.SRCALPHA)
+        exit_button_hover = pygame.Surface((220, 66), pygame.SRCALPHA)
+        
+        # Normal exit button
+        pygame.draw.rect(exit_button_normal, (100, 100, 100, 180), exit_button_normal.get_rect(), border_radius=10)
+        exit_text = exit_font.render("Exit Game", True, (255, 255, 255))
+        exit_text_rect = exit_text.get_rect(center=(exit_button_normal.get_width()//2, exit_button_normal.get_height()//2))
+        exit_button_normal.blit(exit_text, exit_text_rect)
+        
+        # Hover exit button
+        pygame.draw.rect(exit_button_hover, (120, 120, 120, 180), exit_button_hover.get_rect(), border_radius=12)
+        exit_text_hover = exit_font.render("Exit Game", True, (255, 255, 255))
+        exit_text_hover_rect = exit_text_hover.get_rect(center=(exit_button_hover.get_width()//2, exit_button_hover.get_height()//2))
+        exit_button_hover.blit(exit_text_hover, exit_text_hover_rect)
         
         # Button positions (adjusted to be more visible)
-        play_button_rect = play_button.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20))
-        about_button_rect = about_button.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 80))
+        play_button_rect = play_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20))
+        about_button_rect = about_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100))
+        exit_button_rect = exit_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 220))
         
         print("Menu assets loaded successfully")  # Debug log
         
@@ -669,21 +701,54 @@ def show_main_menu():
             print(f"Warning: Could not play menu music: {e}")
         
         while True:
+            mouse_pos = pygame.mouse.get_pos()
+            play_hovered = play_button_rect.collidepoint(mouse_pos)
+            about_hovered = about_button_rect.collidepoint(mouse_pos)
+            exit_hovered = exit_button_rect.collidepoint(mouse_pos)
+            
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return "quit"
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        if SOUND_BUTTON:
+                            try: SOUND_BUTTON.play()
+                            except: pass
+                        return "quit"
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if play_button_rect.collidepoint(event.pos):
+                        if SOUND_BUTTON:
+                            try: SOUND_BUTTON.play()
+                            except: pass
                         return "play"
                     elif about_button_rect.collidepoint(event.pos):
+                        if SOUND_BUTTON:
+                            try: SOUND_BUTTON.play()
+                            except: pass
                         return "about"
+                    elif exit_button_rect.collidepoint(event.pos):
+                        if SOUND_BUTTON:
+                            try: SOUND_BUTTON.play()
+                            except: pass
+                        return "quit"
 
             # Draw the menu
             screen.blit(menu_bg, (0, 0))
-            screen.blit(play_button, play_button_rect)
-            screen.blit(about_button, about_button_rect)
             
-            # Draw text to indicate clickable buttons
+            # Draw buttons with hover effect
+            if play_hovered:
+                hover_rect = play_button_hover.get_rect(center=play_button_rect.center)
+                screen.blit(play_button_hover, hover_rect)
+            else:
+                screen.blit(play_button_normal, play_button_rect)
+                
+            if about_hovered:
+                hover_rect = about_button_hover.get_rect(center=about_button_rect.center)
+                screen.blit(about_button_hover, hover_rect)
+            else:
+                screen.blit(about_button_normal, about_button_rect)
+            
+            
             font = pygame.font.SysFont(None, 24)
             instruction = font.render("Click a button to continue", True, (255, 255, 255))
             instruction_rect = instruction.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 40))
@@ -697,14 +762,11 @@ def show_main_menu():
         return "quit"
 
 def show_about_me():
-    print("Opening About Me screen...")  # Debug log
     try:
-        # Load and scale about image
         about_image = pygame.image.load("assets/Perkenalan.png").convert()
         about_image = pygame.transform.scale(about_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
-        print("About Me image loaded successfully")  # Debug log
         
-        # Create back button text
+        
         font = pygame.font.SysFont(None, 36)
         text = font.render("Press ESC to return to menu", True, (255, 255, 255))
         text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 50))
@@ -715,10 +777,9 @@ def show_about_me():
                     return "quit"
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        print("Returning to main menu...")  # Debug log
                         return "menu"
             
-            # Draw about screen
+            
             screen.blit(about_image, (0, 0))
             screen.blit(text, text_rect)
             pygame.display.flip()
@@ -729,23 +790,22 @@ def show_about_me():
         return "menu"
 
 if __name__ == "__main__":
-    # Initialize pygame and display
+    
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Cyber Space Defender")
     clock = pygame.time.Clock()
 
-    # Main program loop
+    
     current_screen = "menu"
     running = True
     
     while running:
         if current_screen == "menu":
             choice = show_main_menu()
-            print(f"Menu selection: {choice}")  # Debug log
             if choice == "play":
                 run_game()
-                current_screen = "menu"  # Return to menu after game
+                current_screen = "menu"
             elif choice == "about":
                 current_screen = "about"
             elif choice == "quit":
@@ -758,4 +818,4 @@ if __name__ == "__main__":
                 running = False
     
     pygame.quit()
-    sys.exit()  # Kembali ke menu utama setelah keluar dari about me
+    sys.exit()
