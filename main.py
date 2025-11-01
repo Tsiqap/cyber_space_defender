@@ -359,7 +359,7 @@ def spawn_enemies_for_level(level):
     count = 4 + (level - 1) * 3
     for i in range(count):
         x = random.randint(40, SCREEN_WIDTH - 80)
-        y = random.randint(10, 150)  # Posisi musuh dinaikkan agar lebih jauh dari pemain
+        y = random.randint(10, 150)  
         speed = 1.0 + level * 0.4 + random.random() * 0.5
         hp = 1 + (1 if level > 1 else 0)
         enemies.append(Enemy(x, y, speed=speed, hp=hp))
@@ -387,13 +387,13 @@ def run_game():
         collectables.clear()
         boss = Boss() if level == MAX_LEVEL else None
         level_start_time = time.time()
-        # Set different time limits for different levels
-        if level == MAX_LEVEL:  # Boss level
-            level_time_limit = 60  # 1 minute for boss level
+        
+        if level == MAX_LEVEL:  
+            level_time_limit = 60  
         else:
             level_time_limit = max(15, LEVEL_TIME_BASE - (level - 1) * 6)
         
-        # Load appropriate music for each level
+        
         if level == 1:
            pygame.mixer.music.load("assets/music_level1.mp3")
         elif level == 2:
@@ -424,7 +424,7 @@ def run_game():
                 if player.can_shoot():
                     bullets.append(player.shoot())
 
-            # Update bullets
+            
             for b in bullets[:]:
                 b.update()
                 if b.rect.bottom < 0:
@@ -483,7 +483,7 @@ def run_game():
                         try: SOUND_HIT.play()
                         except: pass
 
-            # Collectables pickup
+            
             for c in collectables[:]:
                 if player.rect.colliderect(c):
                     player.score += 5
@@ -492,7 +492,7 @@ def run_game():
                     except ValueError:
                         pass
 
-            # Boss logic
+            
             if boss:
                 boss.update()
                 if boss.ready_attack() and random.random() < 0.02:
@@ -509,7 +509,7 @@ def run_game():
                             pass
                         player.score += 1
 
-            # Level cleared
+            
             if not enemies and not boss:
                 center_text(screen, "LEVEL CLEARED!", SCREEN_HEIGHT//2 - 40, font=TITLE_FONT)
                 pygame.display.flip()
@@ -534,7 +534,7 @@ def run_game():
                     if player.hp <= 0:
                         break
 
-            # Boss quiz mechanic during fight
+            
             if boss:
                 if random.random() < 0.0025:
                     quiz_choice = random.choice(QUIZ_DATA.get(3, []))
@@ -556,7 +556,7 @@ def run_game():
                             level_cleared = True
                             break
 
-            # Time up
+            
             if time_left <= 0:
                 player.hp -= 1
                 player.rect.topleft = PLAYER_START_POS
@@ -567,36 +567,35 @@ def run_game():
                 if player.hp <= 0:
                     break
 
-            # Drawing
-            # Draw scrolling background
+            
             global background_y
-            # Draw background twice to create seamless scroll
+            
             screen.blit(background_img, (0, background_y))
             screen.blit(background_img, (0, background_y - background_img.get_height()))
-            # Update scroll position
+            
             background_y = (background_y + SCROLL_SPEED) % background_img.get_height()
 
-            # Draw player
+            
             if player.sprite:
                 screen.blit(player.sprite, player.rect)
             else:
                 pygame.draw.rect(screen, COLOR_PLAYER, player.rect)
                 pygame.draw.rect(screen, (255,255,255), (player.rect.centerx - 6, player.rect.top - 6, 12, 6))
 
-            # Draw bullets
+            
             for b in bullets:
                 pygame.draw.rect(screen, b.color, b.rect)
             for eb in enemy_bullets:
                 pygame.draw.rect(screen, eb.color, eb.rect)
 
-            # Draw enemies
+            
             for en in enemies:
                 if en.sprite:
                     screen.blit(en.sprite, en.rect)
                 else:
                     pygame.draw.rect(screen, COLOR_ENEMY, en.rect)
             
-            # Draw boss
+            
             if boss:
                 if boss.sprite:
                     screen.blit(boss.sprite, boss.rect)
@@ -624,7 +623,7 @@ def run_game():
         if level > MAX_LEVEL:
             break
 
-    # End of game screen
+    
     screen.fill(COLOR_BG)
     if player.hp > 0:
         center_text(screen, "CONGRATULATIONS - You saved the digital world!", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
@@ -650,53 +649,53 @@ def run_game():
 
 def show_main_menu():
     try:
-        # Load menu assets
+        
         menu_bg = pygame.image.load("assets/tampilan awal.png").convert()
         menu_bg = pygame.transform.scale(menu_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
         
         play_button = pygame.image.load("assets/Play.png").convert_alpha()
         about_button = pygame.image.load("assets/About me.png").convert_alpha()
         
-        # Button sizes and scaling
-        normal_width, normal_height = 300, 100
-        hover_width, hover_height = 330, 110  # Size when hovered
         
-        # Store original scaled buttons
+        normal_width, normal_height = 300, 100
+        hover_width, hover_height = 330, 110  
+        
+        
         play_button_normal = pygame.transform.scale(play_button, (normal_width, normal_height))
         about_button_normal = pygame.transform.scale(about_button, (normal_width, normal_height))
         
-        # Store hover scaled buttons
+        
         play_button_hover = pygame.transform.scale(play_button, (hover_width, hover_height))
         about_button_hover = pygame.transform.scale(about_button, (hover_width, hover_height))
         
-        # Create exit button
+        
         exit_font = pygame.font.SysFont(None, 48)
         exit_button_normal = pygame.Surface((200, 60), pygame.SRCALPHA)
         exit_button_hover = pygame.Surface((220, 66), pygame.SRCALPHA)
         
-        # Normal exit button
+        
         pygame.draw.rect(exit_button_normal, (100, 100, 100, 180), exit_button_normal.get_rect(), border_radius=10)
         exit_text = exit_font.render("Exit Game", True, (255, 255, 255))
         exit_text_rect = exit_text.get_rect(center=(exit_button_normal.get_width()//2, exit_button_normal.get_height()//2))
         exit_button_normal.blit(exit_text, exit_text_rect)
         
-        # Hover exit button
+        
         pygame.draw.rect(exit_button_hover, (120, 120, 120, 180), exit_button_hover.get_rect(), border_radius=12)
         exit_text_hover = exit_font.render("Exit Game", True, (255, 255, 255))
         exit_text_hover_rect = exit_text_hover.get_rect(center=(exit_button_hover.get_width()//2, exit_button_hover.get_height()//2))
         exit_button_hover.blit(exit_text_hover, exit_text_hover_rect)
         
-        # Button positions (adjusted to be more visible)
-        play_button_rect = play_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 - 20))
-        about_button_rect = about_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 100))
+        
+        play_button_rect = play_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 50))
+        about_button_rect = about_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 175))
         exit_button_rect = exit_button_normal.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2 + 220))
         
-        print("Menu assets loaded successfully")  # Debug log
+        print("Menu assets loaded successfully")  
         
-        # Play menu music once
+        
         try:
             pygame.mixer.music.load("assets/music_level1.mp3")
-            pygame.mixer.music.play(-1)  # Loop the music
+            pygame.mixer.music.play(-1)  
         except Exception as e:
             print(f"Warning: Could not play menu music: {e}")
         
@@ -732,10 +731,10 @@ def show_main_menu():
                             except: pass
                         return "quit"
 
-            # Draw the menu
+            
             screen.blit(menu_bg, (0, 0))
             
-            # Draw buttons with hover effect
+            
             if play_hovered:
                 hover_rect = play_button_hover.get_rect(center=play_button_rect.center)
                 screen.blit(play_button_hover, hover_rect)
