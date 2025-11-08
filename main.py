@@ -10,7 +10,7 @@ SCREEN_HEIGHT = 720
 FPS = 60
 
 PLAYER_SPEED = 5
-PLAYER_WIDTH, PLAYER_HEIGHT = 50, 50
+PLAYER_WIDTH, PLAYER_HEIGHT = 75, 75
 PLAYER_START_POS = (SCREEN_WIDTH // 2 - PLAYER_WIDTH // 2, SCREEN_HEIGHT - PLAYER_HEIGHT - 100)
 PLAYER_SHOT_COOLDOWN = 300
 
@@ -41,15 +41,20 @@ STORY_DIALOGS = [
 LEVEL_INTROS = {
     1: [
         "Level 1: Spam Invasion",
-        "Musuh: Spam bots sederhana. Kumpulkan fakta dan jangan biarkan info palsu menyebar."
+        "ini adalah musuhmu di level 1",
+        "Musuh: Spam bots sederhana. Kumpulkan fakta dan jangan biarkan info palsu menyebar. ",
+        "serang menggunakan space dan bergerak menggunakan a/d"
     ],
     2: [
         "Level 2: Data Fortress",
-        "Musuh lebih kuat. Jaga privasi data dan waspadai jebakan."
+        "ini adalah musuhmu di level 2",
+        "Musuh lebih kuat. Jaga privasi data dan waspadai jebakan.",
+        "serang menggunakan space dan bergerak menggunakan a/d"
     ],
     3: [
         "Level 3: Boss - The Hoax Master",
-        "Ini boss yang mengendalikan jaringan hoax. Jawab quiz untuk menembakkan Truth Blaster!"
+        "ini adalah boss yang akan kamu hadapi",
+        "boss ini yang mengendalikan jaringan hoax. Jawab quiz untuk menembakkan Truth Blaster!"
     ]
 }
 
@@ -80,19 +85,44 @@ clock = pygame.time.Clock()
 
 
 try:
-    
     player_sprite = pygame.image.load("assets/player.png").convert_alpha()
     player_sprite = pygame.transform.scale(player_sprite, (PLAYER_WIDTH, PLAYER_HEIGHT))
-    
-    
-    enemy_sprite = pygame.image.load("assets/enemy.png").convert_alpha()
-    enemy_sprite = pygame.transform.scale(enemy_sprite, (100, 100))
-    
+
+    # Load level-specific enemy sprites (fall back to generic if not present)
+    try:
+        enemy_lvl1_sprite = pygame.image.load("assets/enemy_level_1.png").convert_alpha()
+        enemy_lvl1_sprite = pygame.transform.scale(enemy_lvl1_sprite, (90, 90))
+    except Exception:
+        enemy_lvl1_sprite = None
+
+    try:
+        enemy_lvl2_sprite = pygame.image.load("assets/enemy_level_2.png").convert_alpha()
+        enemy_lvl2_sprite = pygame.transform.scale(enemy_lvl2_sprite, (100, 100))
+    except Exception:
+        enemy_lvl2_sprite = None
+
+    # Generic enemy sprite for backwards compatibility
+    try:
+        enemy_sprite = pygame.image.load("assets/enemy.png").convert_alpha()
+        enemy_sprite = pygame.transform.scale(enemy_sprite, (100, 100))
+    except Exception:
+        # if no generic, prefer level1 or level2
+        enemy_sprite = enemy_lvl1_sprite or enemy_lvl2_sprite
+
     boss_sprite = pygame.image.load("assets/boss.png").convert_alpha()
-    boss_sprite = pygame.transform.scale(boss_sprite, (250, 250))
+    boss_sprite = pygame.transform.scale(boss_sprite, (350, 350))
 except Exception as e:
     print(f"Error loading sprites: {e}")
     player_sprite = enemy_sprite = boss_sprite = None
+    # ensure level-specific variables exist
+    try:
+        enemy_lvl1_sprite
+    except NameError:
+        enemy_lvl1_sprite = None
+    try:
+        enemy_lvl2_sprite
+    except NameError:
+        enemy_lvl2_sprite = None
 
 
 try:
@@ -268,6 +298,15 @@ def draw_hud(player, level, time_left):
 
 def show_dialog(lines):
     idx = 0
+    story_bg = pygame.image.load("assets/story.png").convert()
+    story_bg = pygame.transform.scale(story_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+    
+    char_index = 0
+    char_speed = 2  # Karakter per frame
+    char_timer = 0
+    current_text = ""
+    text_complete = False
+
     while True:
         if idx >= len(lines):
             break  
@@ -277,19 +316,70 @@ def show_dialog(lines):
                 pygame.quit(); sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
-                    idx += 1
+                    if text_complete:
+                        idx += 1
+                        char_index = 0
+                        current_text = ""
+                        text_complete = False
+                    else:
+                        # Tampilkan semua teks jika masih berjalan
+                        char_index = len(lines[idx])
+                        text_complete = True
                     break  
-
-      
+        
         if idx >= len(lines):
             break
 
-        overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        overlay.set_alpha(200)
-        overlay.fill((8, 10, 20))
-        screen.blit(overlay, (0,0))
-        center_text(screen, "STORY", 110, font=TITLE_FONT)
-        center_text(screen, lines[idx], 180, font=BIG_FONT)
+        screen.blit(story_bg, (0, 0))
+        
+        if idx == 0:  # Judul
+            center_text(screen, lines[idx], 180, font=TITLE_FONT)
+            text_complete = True
+        else:  # Cerita
+            # Area teks di bagian bawah layar
+            text_area_y = SCREEN_HEIGHT - 150  # Posisi y di bagian bawah
+            
+            # Update teks yang sedang berjalan
+            if not text_complete:
+                char_timer += 1
+                if char_timer >= char_speed:
+                    char_timer = 0
+                    if char_index < len(lines[idx]):
+                        current_text += lines[idx][char_index]
+                        char_index += 1
+                    else:
+                        text_complete = True
+            else:
+                current_text = lines[idx]
+            
+            # Membuat background semi-transparan untuk teks
+            text_bg = pygame.Surface((SCREEN_WIDTH, 100))
+            text_bg.fill((0, 0, 0))
+            text_bg.set_alpha(128)  # 50% transparan
+            screen.blit(text_bg, (0, text_area_y - 20))
+            
+            # Render teks cerita
+            text_lines = []
+            words = current_text.split()
+            current_line = []
+            for word in words:
+                current_line.append(word)
+                test_line = ' '.join(current_line)
+                if BIG_FONT.size(test_line)[0] > 800:  # Batas lebar teks
+                    text_lines.append(' '.join(current_line[:-1]))
+                    current_line = [word]
+            if current_line:
+                text_lines.append(' '.join(current_line))
+            
+            # Menampilkan teks per baris
+            y_offset = text_area_y
+            for line in text_lines:
+                text_surf = BIG_FONT.render(line, True, (255, 255, 255))  # Warna teks putih
+                text_pos = text_surf.get_rect(centerx=SCREEN_WIDTH//2, top=y_offset)
+                screen.blit(text_surf, text_pos)
+                y_offset += 30
+
+        # Instruksi untuk melanjutkan
         draw_text(screen, "Press Enter to continue...", SCREEN_WIDTH - 240, SCREEN_HEIGHT - 40, font=FONT)
         pygame.display.flip()
         clock.tick(FPS)
@@ -357,13 +447,30 @@ def pixel_perfect_collision(sprite1, rect1, sprite2, rect2):
 def spawn_enemies_for_level(level):
     enemies = []
     count = 4 + (level - 1) * 3
+
     for i in range(count):
         x = random.randint(40, SCREEN_WIDTH - 80)
-        y = random.randint(10, 150)  
+        y = random.randint(10, 150)
         speed = 1.0 + level * 0.4 + random.random() * 0.5
         hp = 1 + (1 if level > 1 else 0)
-        enemies.append(Enemy(x, y, speed=speed, hp=hp))
+
+        enemy = Enemy(x, y, speed=speed, hp=hp)
+
+        # === GANTI SPRITE SESUAI LEVEL ===
+        if level == 1 and enemy_lvl1_sprite:
+            enemy.sprite = enemy_lvl1_sprite
+        elif level == 2 and enemy_lvl2_sprite:
+            enemy.sprite = enemy_lvl2_sprite
+        elif level == 3 and enemy_lvl2_sprite:
+            enemy.sprite = enemy_lvl2_sprite
+        
+        else:
+            enemy.sprite = None  # fallback kalau belum ada sprite
+
+        enemies.append(enemy)
     return enemies
+
+
 
 def run_game():
     global SOUND_SHOT, SOUND_HIT, SOUND_QUIZ_RIGHT, SOUND_QUIZ_WRONG, SOUND_BUTTON
