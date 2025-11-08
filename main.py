@@ -111,7 +111,6 @@ try:
         enemy_sprite = pygame.image.load("assets/enemy.png").convert_alpha()
         enemy_sprite = pygame.transform.scale(enemy_sprite, (100, 100))
     except Exception:
-        # if no generic, prefer level1 or level2
         enemy_sprite = enemy_lvl1_sprite or enemy_lvl2_sprite
 
     boss_sprite = pygame.image.load("assets/boss.png").convert_alpha()
@@ -119,7 +118,6 @@ try:
 except Exception as e:
     print(f"Error loading sprites: {e}")
     player_sprite = enemy_sprite = boss_sprite = None
-    # ensure level-specific variables exist
     try:
         enemy_lvl1_sprite
     except NameError:
@@ -316,7 +314,7 @@ def show_dialog(lines, level=None):
 
     
     char_index = 0
-    char_speed = 2  # Karakter per frame
+    char_speed = 2  
     char_timer = 0
     current_text = ""
     text_complete = False
@@ -336,7 +334,7 @@ def show_dialog(lines, level=None):
                         current_text = ""
                         text_complete = False
                     else:
-                        # Tampilkan semua teks jika masih berjalan
+                        
                         char_index = len(lines[idx])
                         text_complete = True
                     break  
@@ -346,14 +344,13 @@ def show_dialog(lines, level=None):
 
         screen.blit(story_bg, (0, 0))
         
-        if idx == 0:  # Judul
+        if idx == 0:  
             center_text(screen, lines[idx], 180, font=TITLE_FONT)
             text_complete = True
-        else:  # Cerita
-            # Area teks di bagian bawah layar
-            text_area_y = SCREEN_HEIGHT - 150  # Posisi y di bagian bawah
+        else:  
+            text_area_y = SCREEN_HEIGHT - 150  
             
-            # Update teks yang sedang berjalan
+            
             if not text_complete:
                 char_timer += 1
                 if char_timer >= char_speed:
@@ -366,34 +363,33 @@ def show_dialog(lines, level=None):
             else:
                 current_text = lines[idx]
             
-            # Membuat background semi-transparan untuk teks
             text_bg = pygame.Surface((SCREEN_WIDTH, 100))
             text_bg.fill((0, 0, 0))
-            text_bg.set_alpha(128)  # 50% transparan
+            text_bg.set_alpha(128)  
             screen.blit(text_bg, (0, text_area_y - 20))
             
-            # Render teks cerita
+            
             text_lines = []
             words = current_text.split()
             current_line = []
             for word in words:
                 current_line.append(word)
                 test_line = ' '.join(current_line)
-                if BIG_FONT.size(test_line)[0] > 800:  # Batas lebar teks
+                if BIG_FONT.size(test_line)[0] > 800:  
                     text_lines.append(' '.join(current_line[:-1]))
                     current_line = [word]
             if current_line:
                 text_lines.append(' '.join(current_line))
             
-            # Menampilkan teks per baris
+            
             y_offset = text_area_y
             for line in text_lines:
-                text_surf = BIG_FONT.render(line, True, (255, 255, 255))  # Warna teks putih
+                text_surf = BIG_FONT.render(line, True, (255, 255, 255))  
                 text_pos = text_surf.get_rect(centerx=SCREEN_WIDTH//2, top=y_offset)
                 screen.blit(text_surf, text_pos)
                 y_offset += 30
 
-        # Instruksi untuk melanjutkan
+        
         draw_text(screen, "Press Enter to continue...", SCREEN_WIDTH - 240, SCREEN_HEIGHT - 40, font=FONT)
         pygame.display.flip()
         clock.tick(FPS)
@@ -470,7 +466,7 @@ def spawn_enemies_for_level(level):
 
         enemy = Enemy(x, y, speed=speed, hp=hp)
 
-        # === GANTI SPRITE SESUAI LEVEL ===
+        
         if level == 1 and enemy_lvl1_sprite:
             enemy.sprite = enemy_lvl1_sprite
         elif level == 2 and enemy_lvl2_sprite:
@@ -479,7 +475,7 @@ def spawn_enemies_for_level(level):
             enemy.sprite = enemy_lvl2_sprite
         
         else:
-            enemy.sprite = None  # fallback kalau belum ada sprite
+            enemy.sprite = None  
 
         enemies.append(enemy)
     return enemies
@@ -827,7 +823,7 @@ def show_main_menu():
         
         
         try:
-            pygame.mixer.music.load("assets/music_level1.mp3")
+            pygame.mixer.music.load("assets/Main_menu.mp3")
             pygame.mixer.music.play(-1)  
         except Exception as e:
             print(f"Warning: Could not play menu music: {e}")
