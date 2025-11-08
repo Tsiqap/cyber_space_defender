@@ -83,12 +83,17 @@ screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Cyber Space Defender")
 clock = pygame.time.Clock()
 
+story_bg_1 = pygame.image.load("assets/story_level_1.png")
+story_bg_2 = pygame.image.load("assets/story_level_2.png")
+story_bg_3 = pygame.image.load("assets/story_level_3.png")
+
+
 
 try:
     player_sprite = pygame.image.load("assets/player.png").convert_alpha()
     player_sprite = pygame.transform.scale(player_sprite, (PLAYER_WIDTH, PLAYER_HEIGHT))
 
-    # Load level-specific enemy sprites (fall back to generic if not present)
+    
     try:
         enemy_lvl1_sprite = pygame.image.load("assets/enemy_level_1.png").convert_alpha()
         enemy_lvl1_sprite = pygame.transform.scale(enemy_lvl1_sprite, (90, 90))
@@ -101,7 +106,7 @@ try:
     except Exception:
         enemy_lvl2_sprite = None
 
-    # Generic enemy sprite for backwards compatibility
+    
     try:
         enemy_sprite = pygame.image.load("assets/enemy.png").convert_alpha()
         enemy_sprite = pygame.transform.scale(enemy_sprite, (100, 100))
@@ -296,10 +301,19 @@ def draw_hud(player, level, time_left):
     txt = FONT.render(timer_text, True, COLOR_TEXT)
     screen.blit(txt, (SCREEN_WIDTH - txt.get_width() - 12, 14))
 
-def show_dialog(lines):
+def show_dialog(lines, level=None):
     idx = 0
-    story_bg = pygame.image.load("assets/story.png").convert()
+    if level == 1:
+        story_bg = pygame.image.load("assets/story_level_1.png").convert()
+    elif level== 2:
+        story_bg = pygame.image.load("assets/story_level_2.png").convert()
+    elif level == 3:
+        story_bg = pygame.image.load("assets/story_level_3.png").convert()
+    else:
+        story_bg = pygame.image.load("assets/story.png").convert()
     story_bg = pygame.transform.scale(story_bg, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+
     
     char_index = 0
     char_speed = 2  # Karakter per frame
@@ -485,7 +499,7 @@ def run_game():
     level = 1
     running = True
 
-    show_dialog(STORY_DIALOGS[0])
+    show_dialog(STORY_DIALOGS[0], level= 0)
 
     while running and level <= MAX_LEVEL and player.hp > 0:
         enemies = spawn_enemies_for_level(level)
@@ -494,6 +508,7 @@ def run_game():
         collectables.clear()
         boss = Boss() if level == MAX_LEVEL else None
         level_start_time = time.time()
+    
         
         if level == MAX_LEVEL:  
             level_time_limit = 60  
@@ -509,7 +524,7 @@ def run_game():
            pygame.mixer.music.load("assets/boss_theme.mp3")
         pygame.mixer.music.play(-1)
 
-        show_dialog(LEVEL_INTROS[level])
+        show_dialog(LEVEL_INTROS[level], level)
         level_cleared = False
 
         while True:
