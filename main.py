@@ -493,6 +493,8 @@ def run_game():
     boss = None
 
     level = 1
+    stars = 0  
+
     running = True
 
     show_dialog(STORY_DIALOGS[0], level= 0)
@@ -758,7 +760,25 @@ def run_game():
         center_text(screen, "CONGRATULATIONS - You saved the digital world!", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
         center_text(screen, f"Final Score: {player.score}", SCREEN_HEIGHT//2, font=BIG_FONT)
     else:
+        
+        
         center_text(screen, "GAME OVER", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
+        center_text(screen, "Your Stars:", SCREEN_HEIGHT//2 - 30, font=BIG_FONT)
+        for i in range(stars):
+          x = SCREEN_WIDTH//2 - (stars*30)//2 + i*30
+          y = SCREEN_HEIGHT//2 + 20
+        pygame.draw.polygon(screen, (255, 215, 0), [
+          (x, y - 10),
+          (x + 4, y - 2),
+          (x + 12, y - 2),
+          (x + 6, y + 2),
+          (x + 8, y + 10),
+          (x, y + 5),
+          (x - 8, y + 10),
+          (x - 6, y + 2),
+          (x - 12, y - 2),
+          (x - 4, y - 2)
+        ])
         center_text(screen, "Hoax prevailed... Try again!", SCREEN_HEIGHT//2, font=BIG_FONT)
     center_text(screen, "Press ENTER to return to Main Menu", SCREEN_HEIGHT//2 + 60, font=FONT)
     pygame.display.flip()
