@@ -481,6 +481,27 @@ def spawn_enemies_for_level(level):
     return enemies
 
 
+star_image = pygame.image.load("assets/star_yellow.png").convert_alpha()
+star_image = pygame.transform.scale(star_image, (60, 60))
+
+def draw_stars(screen, count):
+    STAR_SIZE = 60
+    GAP = 20            # jarak antar bintang
+
+    if count == 3:
+        
+        y = SCREEN_HEIGHT // 2 + 120
+    else:
+        # Untuk GAME OVER → 1 bintang di antara dua teks
+        y = SCREEN_HEIGHT // 2 + 50
+
+    total_width = count * STAR_SIZE + (count - 1) * GAP
+    start_x = (SCREEN_WIDTH - total_width) // 2
+
+    for i in range(count):
+        x = start_x + i * (STAR_SIZE + GAP)
+        screen.blit(star_image, (x, y))
+
 
 def run_game():
     global SOUND_SHOT, SOUND_HIT, SOUND_QUIZ_RIGHT, SOUND_QUIZ_WRONG, SOUND_BUTTON
@@ -493,8 +514,6 @@ def run_game():
     boss = None
 
     level = 1
-    stars = 0  
-
     running = True
 
     show_dialog(STORY_DIALOGS[0], level= 0)
@@ -759,28 +778,22 @@ def run_game():
     if player.hp > 0:
         center_text(screen, "CONGRATULATIONS - You saved the digital world!", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
         center_text(screen, f"Final Score: {player.score}", SCREEN_HEIGHT//2, font=BIG_FONT)
+        draw_stars(screen, 3)
     else:
-        
-        
-        center_text(screen, "GAME OVER", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
-        center_text(screen, "Your Stars:", SCREEN_HEIGHT//2 - 30, font=BIG_FONT)
-        for i in range(stars):
-          x = SCREEN_WIDTH//2 - (stars*30)//2 + i*30
-          y = SCREEN_HEIGHT//2 + 20
-        pygame.draw.polygon(screen, (255, 215, 0), [
-          (x, y - 10),
-          (x + 4, y - 2),
-          (x + 12, y - 2),
-          (x + 6, y + 2),
-          (x + 8, y + 10),
-          (x, y + 5),
-          (x - 8, y + 10),
-          (x - 6, y + 2),
-          (x - 12, y - 2),
-          (x - 4, y - 2)
-        ])
-        center_text(screen, "Hoax prevailed... Try again!", SCREEN_HEIGHT//2, font=BIG_FONT)
-    center_text(screen, "Press ENTER to return to Main Menu", SCREEN_HEIGHT//2 + 60, font=FONT)
+        if level == 1:
+          center_text(screen, "GAME OVER", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
+          center_text(screen, "Hoax prevailed... Try again!", SCREEN_HEIGHT//2, font=BIG_FONT)
+          center_text(screen, "Press ENTER to return to Main Menu", SCREEN_HEIGHT//2 + 170, font=FONT)
+        elif level == 2:
+          center_text(screen, "GAME OVER", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
+          center_text(screen, "Hoax prevailed... Try again!", SCREEN_HEIGHT//2, font=BIG_FONT)
+          center_text(screen, "Press ENTER to return to Main Menu", SCREEN_HEIGHT//2 + 170, font=FONT)
+          draw_stars(screen , 1)
+        elif level == 3:
+          center_text(screen, "GAME OVER", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
+          center_text(screen, "Hoax prevailed... Try again!", SCREEN_HEIGHT//2, font=BIG_FONT)
+          center_text(screen, "Press ENTER to return to Main Menu", SCREEN_HEIGHT//2 + 170, font=FONT)
+          draw_stars(screen , 2)
     pygame.display.flip()
 
     waiting = True
