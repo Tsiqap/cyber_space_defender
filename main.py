@@ -20,13 +20,13 @@ ENEMY_BULLET_SPEED = 6
 LEVEL_TIME_BASE = 45
 MAX_LEVEL = 3
 
-COLOR_BG = (10, 12, 30)
+COLOR_BG = (0, 0, 50)
 COLOR_PLAYER = (50, 160, 255)
 COLOR_ENEMY = (220, 60, 60)
 COLOR_BULLET = (255, 230, 100)
-COLOR_TEXT = (230, 230, 230)
-COLOR_UI = (90, 90, 120)
-COLOR_BOSS = (170, 80, 200)
+COLOR_TEXT = (100, 255, 100)
+COLOR_UI = (0, 90, 0)
+COLOR_BOSS = (0, 80, 0)
 COLOR_COLLECT = (60, 200, 120)
 
 STORY_DIALOGS = [
@@ -43,13 +43,13 @@ LEVEL_INTROS = {
         "Level 1: Spam Invasion",
         "ini adalah musuhmu di level 1",
         "Musuh: Spam bots sederhana. Kumpulkan fakta dan jangan biarkan info palsu menyebar. ",
-        "serang menggunakan space dan bergerak menggunakan a/d"
+        "serang menggunakan space dan bergerak menggunakan Arrow key"
     ],
     2: [
         "Level 2: Data Fortress",
         "ini adalah musuhmu di level 2",
         "Musuh lebih kuat. Jaga privasi data dan waspadai jebakan.",
-        "serang menggunakan space dan bergerak menggunakan a/d"
+        "serang menggunakan space dan bergerak menggunakan Arrow key"
     ],
     3: [
         "Level 3: Boss - The Hoax Master",
@@ -86,7 +86,7 @@ clock = pygame.time.Clock()
 story_bg_1 = pygame.image.load("assets/story_level_1.png")
 story_bg_2 = pygame.image.load("assets/story_level_2.png")
 story_bg_3 = pygame.image.load("assets/story_level_3.png")
-
+font = pygame.font.Font("assets/pixel_lcd_7.ttf", 32)
 
 
 try:
@@ -96,13 +96,13 @@ try:
     
     try:
         enemy_lvl1_sprite = pygame.image.load("assets/enemy_level_1.png").convert_alpha()
-        enemy_lvl1_sprite = pygame.transform.scale(enemy_lvl1_sprite, (90, 90))
+        enemy_lvl1_sprite = pygame.transform.scale(enemy_lvl1_sprite, (80, 80))
     except Exception:
         enemy_lvl1_sprite = None
 
     try:
         enemy_lvl2_sprite = pygame.image.load("assets/enemy_level_2.png").convert_alpha()
-        enemy_lvl2_sprite = pygame.transform.scale(enemy_lvl2_sprite, (100, 100))
+        enemy_lvl2_sprite = pygame.transform.scale(enemy_lvl2_sprite, (90, 90))
     except Exception:
         enemy_lvl2_sprite = None
 
@@ -114,7 +114,7 @@ try:
         enemy_sprite = enemy_lvl1_sprite or enemy_lvl2_sprite
 
     boss_sprite = pygame.image.load("assets/boss.png").convert_alpha()
-    boss_sprite = pygame.transform.scale(boss_sprite, (350, 350))
+    boss_sprite = pygame.transform.scale(boss_sprite, (175, 175))
 except Exception as e:
     print(f"Error loading sprites: {e}")
     player_sprite = enemy_sprite = boss_sprite = None
@@ -148,15 +148,11 @@ except:
     SCROLL_SPEED = 1
 
 
-try:
-    FONT = pygame.font.SysFont("arial", 18)
-    BIG_FONT = pygame.font.SysFont("arial", 28, bold=True)
-    TITLE_FONT = pygame.font.SysFont("arial", 36, bold=True)
-except Exception:
-    
-    FONT = pygame.font.Font(None, 18)
-    BIG_FONT = pygame.font.Font(None, 28)
-    TITLE_FONT = pygame.font.Font(None, 36)
+
+FONT = pygame.font.Font("assets/pixel_lcd_7.ttf", 10)
+BIG_FONT = pygame.font.Font("assets/pixel_lcd_7.ttf", 17)
+TITLE_FONT = pygame.font.Font("assets/pixel_lcd_7.ttf", 36)
+
 
 SOUND_SHOT = SOUND_HIT = SOUND_QUIZ_RIGHT = SOUND_QUIZ_WRONG = SOUND_BUTTON = None
 
@@ -184,7 +180,7 @@ class Player:
         self.rect = pygame.Rect(*PLAYER_START_POS, PLAYER_WIDTH, PLAYER_HEIGHT)
         self.speed = PLAYER_SPEED
         self.last_shot = 0
-        self.hp = 3
+        self.hp = 5
         self.score = 0
         self.sprite = player_sprite  
 
@@ -256,7 +252,7 @@ class Enemy:
 class Boss:
     def __init__(self):
         self.rect = pygame.Rect(SCREEN_WIDTH//2 - 125, 50, 250, 250)  
-        self.hp = 6
+        self.hp = 5
         self.timer = 0
         self.attack_cooldown = 120
         self.phase = 1
@@ -384,13 +380,13 @@ def show_dialog(lines, level=None):
             
             y_offset = text_area_y
             for line in text_lines:
-                text_surf = BIG_FONT.render(line, True, (255, 255, 255))  
+                text_surf = BIG_FONT.render(line, True, (0, 255, 4))  
                 text_pos = text_surf.get_rect(centerx=SCREEN_WIDTH//2, top=y_offset)
                 screen.blit(text_surf, text_pos)
                 y_offset += 30
 
         
-        draw_text(screen, "Press Enter to continue...", SCREEN_WIDTH - 240, SCREEN_HEIGHT - 40, font=FONT)
+        draw_text(screen, "Press Enter to continue...", SCREEN_WIDTH - 230, SCREEN_HEIGHT - 40, font=FONT)
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -503,6 +499,8 @@ def draw_stars(screen, count):
         screen.blit(star_image, (x, y))
 
 
+
+
 def run_game():
     global SOUND_SHOT, SOUND_HIT, SOUND_QUIZ_RIGHT, SOUND_QUIZ_WRONG, SOUND_BUTTON
     
@@ -598,6 +596,8 @@ def run_game():
                             try: SOUND_HIT.play()
                             except: pass
                         if en.hp <= 0:
+                            
+
                             try:
                                 enemies.remove(en)
                             except ValueError:
@@ -762,7 +762,7 @@ def run_game():
                 pygame.draw.rect(screen, COLOR_COLLECT, c)
 
             draw_hud(player, level, time_left)
-            draw_text(screen, "Controls: ←/A, →/D, Space=Shoot. Answer quizzes with 1/2/3.", 12, SCREEN_HEIGHT - 28, font=FONT)
+            draw_text(screen, "Controls: ←/A, →/D, Space = Shoot.", 12, SCREEN_HEIGHT - 28, font=FONT)
             pygame.display.flip()
 
             if player.hp <= 0:
@@ -773,11 +773,15 @@ def run_game():
         if level > MAX_LEVEL:
             break
 
+
+
+
     
     screen.fill(COLOR_BG)
     if player.hp > 0:
         center_text(screen, "CONGRATULATIONS - You saved the digital world!", SCREEN_HEIGHT//2 - 40, font=BIG_FONT)
         center_text(screen, f"Final Score: {player.score}", SCREEN_HEIGHT//2, font=BIG_FONT)
+        center_text(screen, "Press ENTER to return to Main Menu", SCREEN_HEIGHT//2 + 190, font=FONT)
         draw_stars(screen, 3)
     else:
         if level == 1:
@@ -910,8 +914,8 @@ def show_main_menu():
                 screen.blit(about_button_normal, about_button_rect)
             
             
-            font = pygame.font.SysFont(None, 24)
-            instruction = font.render("Click a button to continue", True, (255, 255, 255))
+            
+            instruction = FONT.render("Click a button to continue", True, (255, 255, 255))
             instruction_rect = instruction.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 40))
             screen.blit(instruction, instruction_rect)
             
@@ -929,7 +933,7 @@ def show_about_me():
         
         
         font = pygame.font.SysFont(None, 36)
-        text = font.render("Press ESC to return to menu", True, (255, 255, 255))
+        text = FONT.render("Press ESC to return to menu", True, (255, 255, 255))
         text_rect = text.get_rect(center=(SCREEN_WIDTH/2, SCREEN_HEIGHT - 50))
         
         while True:
@@ -980,3 +984,4 @@ if __name__ == "__main__":
     
     pygame.quit()
     sys.exit()
+
